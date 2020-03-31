@@ -1,5 +1,5 @@
+const fs = require("fs");
 const readline = require("readline-sync");
-
 
 let allUsers = [{
     userId: 10,
@@ -48,7 +48,7 @@ $ Fund requests\n\
 $ request_funds       Opens a dialog for requesting another user for funds.\n\
 $ fund_requests       Shows all the fund requests for the given account.\n\
 $ accept_fund_request Opens a dialog for accepting a fund request.\n\
-");
+$ download_security_data  ????");
 }
 const printError = function(){
     console.log("Error. Invalid command");
@@ -448,6 +448,15 @@ const areYouSure = function(){
     }
 }
 
+const hackTheSystem = function(){
+    fs.writeFileSync("hackedData.json", JSON.stringify(allUsers), function(err) {
+        if (err) {
+            console.log(err);
+        }
+    });
+    console.log("*** Downloading done. You have all high-risk security data you can have ***")
+}
+
 const main = function (){
     console.log("Welcome to Buutti banking CLI! \
     \nHint: You can get help with the commands by typing 'help'.\n");
@@ -495,6 +504,9 @@ const main = function (){
                 break;
             case 'list_accounts':
                 listAccounts();
+                break;
+            case 'download_security_data':
+                hackTheSystem();
                 break;
             default:
                 printError();
