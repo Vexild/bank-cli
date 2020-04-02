@@ -1,5 +1,6 @@
 const fs = require("fs");
 const readline = require("readline-sync");
+require("colors");
 
 let allUsers = [{
     userId: 10,
@@ -29,26 +30,27 @@ const printHelp = function(){
     console.log(
     "$ Here’s a list of commands you can use! \n\
 $ \n\
-$ help                Opens this dialog.\n\
-$ quit                Quits the program.\n\
+$ help                      Opens this dialog.\n\
+$ quit                      Quits the program.\n\
 $ \n\
 $ Account actions\n\
-$ create_account      Opens a dialog for creating an account.\n\
-$ close_account       Opens a dialog for closing an account.\n\
-$ change_name         Opens a dialog for changing the name associated with an account.\n\
-$ does_account_exist  Opens a dialog for checking if an account exists.\n\
-$ account_balance     Opens a dialog for logging in and prints the account balance.\n\
+$ create_account            Opens a dialog for creating an account.\n\
+$ close_account             Opens a dialog for closing an account.\n\
+$ change_name               Opens a dialog for changing the name associated with an account.\n\
+$ does_account_exist        Opens a dialog for checking if an account exists.\n\
+$ account_balance           Opens a dialog for logging in and prints the account balance.\n\
 $ \n\
 $ Fund actions\n\
-$ withdraw_funds      Opens a dialog for withdrawing funds.\n\
-$ deposit_funds       Opens a dialog for depositing funds.\n\
-$ transfer_funds      Opens a dialog for transferring funds to another account.\n\
+$ withdraw_funds            Opens a dialog for withdrawing funds.\n\
+$ deposit_funds             Opens a dialog for depositing funds.\n\
+$ transfer_funds            Opens a dialog for transferring funds to another account.\n\
 $ \n\
 $ Fund requests\n\
-$ request_funds       Opens a dialog for requesting another user for funds.\n\
-$ fund_requests       Shows all the fund requests for the given account.\n\
-$ accept_fund_request Opens a dialog for accepting a fund request.\n\
-$ download_security_data  ????");
+$ request_funds             Opens a dialog for requesting another user for funds.\n\
+$ fund_requests             Shows all the fund requests for the given account.\n\
+$ accept_fund_request       Opens a dialog for accepting a fund request.\n\
+$ download_security_data    ????\n\
+$ hack_the_bank             ????");
 }
 const printError = function(){
     console.log("Error. Invalid command");
@@ -95,10 +97,12 @@ const deleteAccount = function(){
         console.log("\n$ Please write 'DELETE' to delete this account");
         let confirm = readline.question(">");
         if(confirm === 'DELETE'){
-            for( const key in allUsers){
-                if(allUsers[key].userId === loginID){
-                    allUsers.splice(key, 1);
-                    console.log("\n$ Deleted account ID",loginID,". \n$ Returning." );
+            if(areYouSure()){
+                for( const key in allUsers){
+                    if(allUsers[key].userId === loginID){
+                        allUsers.splice(key, 1);
+                        console.log("\n$ Deleted account ID",loginID,". \n$ Returning." );
+                    }
                 }
             }
         }
@@ -145,6 +149,15 @@ const getAccount = function(checkID){
         }
     }
     return false;  
+}
+
+const getAllAccount = function(checkID){
+    if(areYouSure()){
+        console.log(allUsers);
+        console.log("*****" .red)
+        console.log("SUPO has detected your illegal acitivty. Jorma is coming.".red);
+        console.log("*****" .red)
+    }
 }
 
 const validatePassword = function(userAccount, userPassword){
@@ -203,18 +216,20 @@ const modifyBalance = function (account, ammount, operation){
     }
 }
 const withdrawFunds = function (){
-    console.log("\n$ Withdrawing cash!\n$ What is your account ID?")
+    console.log("\n$ Withdrawing cash!")
     const loginInfo = login();
     const loginStatus = loginInfo[0];
     if(loginStatus){
         const loginID = loginInfo[1];
-        const currentBalance = getAccount().balance
+        const currentBalance = getAccount(loginID).balance
         while(true){
             console.log("\n$ How much money do you want to withdraw? (Current balance: ",currentBalance,"€)")
             let drawAmmount = readline.questionInt(">");
             if( drawAmmount <= currentBalance){
-                modifyBalance(getAccount(loginID), drawAmmount, "DEC");
-                console.log("$ Withdrawing a cash sum of ",drawAmmount,"€. Your account balance is now ",getAccount(loginID).balance,"€.")
+                if(areYouSure()){
+                    modifyBalance(getAccount(loginID), drawAmmount, "DEC");
+                    console.log("$ Withdrawing a cash sum of ",drawAmmount,"€. Your account balance is now ",getAccount(loginID).balance,"€.")
+                }
                 break;
             }
             else{
@@ -232,15 +247,11 @@ const depositFunds = function(){
     if(loginStatus){
         const loginID = loginInfo[1];
         let currentBalance = getAccount(loginID).balance
-        
-        console.log("\n$ Correct password. We validated you as ",getAccount(loginID).user,".")
         while(true){
             console.log("$ How much money do you want to deposit? (Current balance: ",currentBalance,"€)")
             let sum = readline.questionInt(">");
-            if(areYouSure()){
-                modifyBalance(getAccount(loginID), sum, "INC");
-                console.log("$ Depositing ",sum,"€. Your account balance is now ",getAccount(loginID).balance,"€.")
-            }
+            modifyBalance(getAccount(loginID), sum, "INC");
+            console.log("$ Depositing ",sum,"€. Your account balance is now ",getAccount(loginID).balance,"€.")
             break;
         }      
     }
@@ -285,9 +296,6 @@ const tranferFunds = function() {
     }
 }
 
-
-// NEW STYLE!
-// IMPLEMENT THIS TO ALL FUNCTIONS
 const requestFunds = function(){
     console.log("$ Requesting funds!")
     const loginInfo = login();
@@ -363,7 +371,7 @@ const acceptFundRequests = function(){
                 console.log("\n$ Your account balance is ",getAccount(loginID).balance,"€. Which fund request would you like to accept?")
                 listRequests(loginInfo[1]);
                 let targetRequest = (readline.questionInt(">"))-1;
-                if(typeof(targetRequest) === 'number'){
+                if(typeof(targetRequest) === 'number' && areYouSure()){
 
                     let getRequestFromArray = getAccount(loginID).fund_requests[targetRequest]  //target request
                     let sum = getRequestFromArray.sum;  // requests sum
@@ -374,7 +382,6 @@ const acceptFundRequests = function(){
                         modifyBalance(getAccount(loginID),sum, "DEC");
                         modifyBalance(getAccount(sender), sum, "INC");
                         console.log("$ Transferring  ",sum,"€ to account ID  ",sender,".\n$ Your account balance is now  ",getAccount(loginID).balance,"€.")
-                        //const targetToBeDeleted = getAccount(id).fund_requests[targetRequest];
                         getAccount(loginID).fund_requests.splice(targetRequest, 1)
                         break;
                     }
@@ -454,11 +461,11 @@ const hackTheSystem = function(){
             console.log(err);
         }
     });
-    console.log("*** Downloading done. You have all high-risk security data you can have ***")
+    console.log("*** Downloading done. You have all high-risk security data you can have ***" .red)
 }
 
 const main = function (){
-    console.log("Welcome to Buutti banking CLI! \
+    console.log("\nWelcome to Buutti banking CLI! \
     \nHint: You can get help with the commands by typing 'help'.\n");
     while(true){
         let cmd = readline.question(">");
@@ -508,11 +515,14 @@ const main = function (){
             case 'download_security_data':
                 hackTheSystem();
                 break;
+            case 'hack_the_bank':
+                console.log("**** HACKING THE SYSTEM ****");
+                getAllAccount();
+                break;
             default:
                 printError();
     }
     
     }
 }
-
 main();
